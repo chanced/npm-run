@@ -1,0 +1,6 @@
+{
+    "name": "run_test",
+    "scripts": {
+        "echo": "echo"
+    }
+}
