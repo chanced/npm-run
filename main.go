@@ -90,6 +90,10 @@ func promptArgs() []string {
 		color.Red(err.Error())
 		os.Exit(1)
 	}
-	args := strings.Split(strings.TrimSpace(a.Arguments), " ")
-	return append([]string{a.Script}, args...)
+	args := strings.TrimSpace(a.Arguments)
+	if args != "" {
+		return append([]string{a.Script}, args)
+	} else {
+		return []string{a.Script}
+	}
 }
