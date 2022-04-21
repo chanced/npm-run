@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"os/exec"
+	"sort"
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
@@ -63,7 +64,7 @@ func promptArgs() []string {
 	for k := range pkg.Scripts {
 		scripts = append(scripts, k)
 	}
-
+	sort.Strings(scripts)
 	qs := []*survey.Question{
 		{
 			Name: "script",
