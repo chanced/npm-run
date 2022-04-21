@@ -2,6 +2,7 @@
     "name": "run_test",
     "scripts": {
         "echo": "echo",
-        "another": "echo hello world"
+        "lint": "echo example lint",
+        "build": "echo example build"
     }
 }
