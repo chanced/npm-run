@@ -2,16 +2,19 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"os"
 	"os/exec"
+	"strings"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/fatih/color"
 )
 
 func main() {
-	args := parse_args()
+	args := append([]string{"run"}, loadArgs()...)
 	cmd := exec.Command("npm", args...)
+
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	err := cmd.Run()
@@ -24,25 +27,68 @@ type packageJSON struct {
 	Scripts map[string]string `json:"scripts"`
 }
 
-func parse_args() []string {
-	if len(os.Args) < 2 {
-		fmt.Printf("usage:\nrun %s %s\n", color.CyanString("<script>"), color.MagentaString("<arguments>"))
-		p, err := os.ReadFile("package.json")
-		var pkg packageJSON
-		if err == nil {
-			err = json.Unmarshal(p, &pkg)
-			if err == nil {
-				fmt.Println("\navailable scripts:")
-				for k := range pkg.Scripts {
-					fmt.Printf("\t%s\n", k)
-				}
-			}
-		}
+func loadArgs() []string {
+	args := os.Args
+	if len(args) < 2 {
+		args = promptArgs()
+	} else {
+		args = args[1:]
+	}
+	if len(args) > 1 {
+		return append([]string{args[0], "--"}, args[1:]...)
+	}
+	return []string{args[0]}
+}
 
-		os.Exit(0)
+func promptArgs() []string {
+	p, err := os.ReadFile("package.json")
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			color.Red("package.json not found")
+		} else {
+			color.Red("error reading package.json")
+		}
+		os.Exit(1)
 	}
-	if len(os.Args) > 2 {
-		return append([]string{"run", os.Args[1], "--"}, os.Args[2:]...)
+	var pkg packageJSON
+
+	err = json.Unmarshal(p, &pkg)
+	if err != nil {
+		color.Red("error parsing package.json")
+		os.Exit(1)
 	}
-	return []string{"run", os.Args[1]}
+
+	scripts := []string{}
+
+	for k := range pkg.Scripts {
+		scripts = append(scripts, k)
+	}
+
+	qs := []*survey.Question{
+		{
+			Name: "script",
+			Prompt: &survey.Select{
+				Message: "Script:",
+				Options: scripts,
+			},
+			Validate: survey.Required,
+		},
+		{
+			Name: "arguments",
+			Prompt: &survey.Input{
+				Message: "Arguments:",
+			},
+		},
+	}
+	a := struct {
+		Script    string `survey:"script"`
+		Arguments string `survey:"arguments"`
+	}{}
+	err = survey.Ask(qs, &a)
+	if err != nil {
+		color.Red(err.Error())
+		os.Exit(1)
+	}
+	args := strings.Split(strings.TrimSpace(a.Arguments), " ")
+	return append([]string{a.Script}, args...)
 }
