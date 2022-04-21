@@ -2,6 +2,6 @@
 
 A very simple go program that runs local npm scripts.
 
-[![asciicast](https://asciinema.org/a/l7NuiemXA4zl7mW4b3m13IZOq.svg)](https://asciinema.org/a/l7NuiemXA4zl7mW4b3m13IZOq)
+[![asciicast](https://asciinema.org/a/ldSKFLE8LrdrqhNy9EVI8cA3P.svg)](https://asciinema.org/a/ldSKFLE8LrdrqhNy9EVI8cA3P)
 
 MIT
