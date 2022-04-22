@@ -67,9 +67,13 @@ func parse(args []string) Command {
 	}
 	args = args[1:]
 	foundNonFlag := false
-	cp := make([]string, len(args))
+	cp := make([]string, 0, len(args))
 	nextIsWorkspace := false
 	for _, a := range args {
+		a = strings.Trim(a, " ")
+		if a == "" {
+			continue
+		}
 		if !foundNonFlag && strings.HasPrefix(a, "-w") {
 			if strings.HasPrefix(a, "-w=") {
 				cmd.Workspaces = append(cmd.Workspaces, strings.Split(strings.Replace(a, "-w=", "", 1), ",")...)
@@ -94,15 +98,12 @@ func parse(args []string) Command {
 			continue
 		}
 		foundNonFlag = true
-		a = strings.Trim(a, " ")
 		if cmd.Script == "" {
 			cmd.Script = a
 			continue
 		}
-
 		cp = append(cp, a)
 	}
-
 	cmd.Arguments = strings.Join(cp, " ")
 	return cmd
 }
