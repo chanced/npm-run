@@ -1,0 +1,14 @@
+{
+    "name": "run_test",
+    "scripts": {
+        "echo": "echo",
+        "lint": "echo example lint",
+        "build": "echo example build",
+        "prompt": "../triterra/bin/confirm.sh"
+    },
+    "workspaces": [
+        "workspace_a",
+        "workspace_b",
+        "workspaces/*"
+    ]
+}

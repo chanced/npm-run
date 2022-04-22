@@ -1,0 +1,8 @@
+{
+    "name": "@workspaces/sub_b",
+    "scripts": {
+        "build": "echo 'build from sub_b'",
+        "sub_b": "echo 'sub_b'",
+        "sub": "echo 'sub from sub_b'"
+    }
+}

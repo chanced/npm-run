@@ -1,0 +1,7 @@
+{
+    "name": "workspace_a",
+    "scripts": {
+        "build": "echo 'build from workspace_a'",
+        "workspace_a": "echo workspace_a"
+    }
+}
