@@ -34,25 +34,51 @@ func command() *exec.Cmd {
 }
 
 type Command struct {
-	Script     string   `survey:"script"`
-	Arguments  string   `survey:"arguments"`
+	Script     string `survey:"script"`
+	Arguments  []string
 	Workspaces []string `survey:"workspaces"`
+	// Args from prompt
+	Args string `survey:"args"`
 }
 
 func (c Command) args() []string {
-	args := []string{"run", c.Script}
+	result := []string{"run", c.Script}
 	for _, w := range c.Workspaces {
 		w = strings.Trim(w, " ")
 		if w != "" {
-			args = append(args, "--workspace="+w)
+			result = append(result, "--workspace="+w)
 		}
 	}
-	opts := strings.Trim(c.Arguments, " ")
-	if len(opts) > 0 {
-		args = append(args, "--")
-		args = append(args, c.Arguments)
+	if c.Args != "" {
+		var quote *rune
+		args := strings.FieldsFunc(c.Args, func(r rune) bool {
+			switch r {
+			case '"', '`', '\'':
+				if quote == nil {
+					quote = &r
+				} else {
+					quote = nil
+				}
+			}
+			return quote == nil && r == ' '
+		})
+		if quote != nil {
+			color.Red("Unmatched quote:", *quote)
+			os.Exit(1)
+		}
+		for _, arg := range args {
+			strings.TrimFunc(arg, func(r rune) bool {
+				return r == '"' || r == '\''
+			})
+		}
+		c.Arguments = append(c.Arguments, args...)
 	}
-	return args
+
+	if len(c.Arguments) > 0 {
+		result = append([]string{"--"}, result...)
+		result = append(result, c.Arguments...)
+	}
+	return result
 }
 
 type packageJSON struct {
@@ -104,7 +130,7 @@ func parse(args []string) Command {
 		}
 		cp = append(cp, a)
 	}
-	cmd.Arguments = strings.Join(cp, " ")
+	cmd.Arguments = cp
 	return cmd
 }
 
@@ -139,7 +165,7 @@ func prompt() Command {
 			Validate: survey.Required,
 		},
 		{
-			Name: "arguments",
+			Name: "args",
 			Prompt: &survey.Input{
 				Message: "Arguments:",
 			},
