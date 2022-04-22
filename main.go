@@ -147,7 +147,7 @@ func openPackage(p string) packageJSON {
 	data, err := os.ReadFile(pkgpath)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			color.Red("package.json not found:", pkgpath)
+			color.Red("package.json not found: %s", pkgpath)
 		} else {
 			color.Red("error reading package.json")
 		}
@@ -156,7 +156,7 @@ func openPackage(p string) packageJSON {
 	var pkg packageJSON
 	err = json.Unmarshal(data, &pkg)
 	if err != nil {
-		color.Red("error parsing package.json", p)
+		color.Red("error parsing package.json: %s", p)
 		os.Exit(1)
 	}
 	return pkg
