@@ -4,5 +4,9 @@
         "echo": "echo",
         "lint": "echo example lint",
         "build": "echo example build"
-    }
+    },
+    "workspaces": [
+        "app",
+        "lib"
+    ]
 }

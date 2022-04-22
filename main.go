@@ -15,7 +15,7 @@ import (
 func main() {
 	args := append([]string{"run"}, loadArgs()...)
 	cmd := exec.Command("npm", args...)
-
+	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	err := cmd.Run()
@@ -25,7 +25,8 @@ func main() {
 }
 
 type packageJSON struct {
-	Scripts map[string]string `json:"scripts"`
+	Scripts    map[string]string `json:"scripts"`
+	Workspaces *[]string         `json:"workspaces,omitempty"`
 }
 
 func loadArgs() []string {
@@ -81,14 +82,35 @@ func promptArgs() []string {
 			},
 		},
 	}
+
+	if pkg.Workspaces != nil && len(*pkg.Workspaces) > 0 {
+		qs = append(qs, &survey.Question{
+			Name: "workspaces",
+			Prompt: &survey.MultiSelect{
+				Message: "Workspaces:",
+				Options: *pkg.Workspaces,
+			},
+		})
+	}
+
 	a := struct {
-		Script    string `survey:"script"`
-		Arguments string `survey:"arguments"`
+		Script     string   `survey:"script"`
+		Arguments  string   `survey:"arguments"`
+		Workspaces []string `survey:"workspaces"`
 	}{}
 	err = survey.Ask(qs, &a)
 	if err != nil {
 		color.Red(err.Error())
 		os.Exit(1)
+	}
+	ws := []string{}
+	for _, w := range a.Workspaces {
+		if len(w) > 0 {
+			ws = append(ws, w)
+		}
+	}
+	if len(ws) > 0 {
+		// TODO: add --workspace flag
 	}
 	args := strings.TrimSpace(a.Arguments)
 	if args != "" {
