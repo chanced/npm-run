@@ -66,8 +66,8 @@ func (c Command) args() []string {
 			color.Red("Unmatched quote:", *quote)
 			os.Exit(1)
 		}
-		for _, arg := range args {
-			strings.TrimFunc(arg, func(r rune) bool {
+		for i, arg := range args {
+			args[i] = strings.TrimFunc(arg, func(r rune) bool {
 				return r == '"' || r == '\''
 			})
 		}
