@@ -21,7 +21,6 @@ func main() {
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
-	fmt.Println(cmd)
 	err := cmd.Run()
 	if err != nil {
 		os.Exit(1)
@@ -35,8 +34,6 @@ func command() *exec.Cmd {
 	} else {
 		c = prompt()
 	}
-	fmt.Printf("%+v", c)
-
 	return exec.Command("npm", c.args()...)
 }
 
