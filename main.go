@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"os"
 	"os/exec"
 	"sort"
@@ -15,9 +14,6 @@ import (
 
 func main() {
 	cmd := command()
-	fmt.Println("=========")
-	fmt.Println(cmd)
-	fmt.Println("=========")
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
@@ -34,7 +30,6 @@ func command() *exec.Cmd {
 	} else {
 		c = prompt()
 	}
-	fmt.Printf("%+v\n", c)
 	return exec.Command("npm", c.args()...)
 }
 
@@ -57,7 +52,6 @@ func (c Command) args() []string {
 		args = append(args, "--")
 		args = append(args, c.Arguments)
 	}
-	fmt.Println(args)
 	return args
 }
 
@@ -77,7 +71,6 @@ func parse(args []string) Command {
 	nextIsWorkspace := false
 	for i, a := range args {
 		if !foundNonFlag && strings.HasPrefix(a, "-w") {
-			fmt.Println("skipping", a, "\tindex", i)
 			if strings.HasPrefix(a, "-w=") {
 				cmd.Workspaces = append(cmd.Workspaces, strings.Split(strings.Replace(a, "-w=", "", 1), ",")...)
 				nextIsWorkspace = false
@@ -107,7 +100,6 @@ func parse(args []string) Command {
 		}
 		cp = append(cp, a)
 	}
-	fmt.Printf("%+x\n", cmd)
 	cmd.Arguments = strings.Join(cp, " ")
 	return cmd
 }
