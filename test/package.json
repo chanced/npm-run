@@ -3,7 +3,7 @@
     "scripts": {
         "echo": "echo",
         "lint": "echo example lint",
-        "build": "echo example build",
+        "build": "echo build from root",
         "prompt": "../triterra/bin/confirm.sh"
     },
     "workspaces": [

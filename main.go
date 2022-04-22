@@ -127,7 +127,7 @@ func parse(args []string) Command {
 			continue
 		}
 		if nextIsWorkspace {
-			cmd.Workspaces = append(cmd.Workspaces, a)
+			cmd.Workspaces = append(cmd.Workspaces, strings.Split(a, ",")...)
 			nextIsWorkspace = false
 			continue
 		}
