@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"sort"
@@ -13,8 +14,10 @@ import (
 )
 
 func main() {
-	args := append([]string{"run"}, loadArgs()...)
-	cmd := exec.Command("npm", args...)
+	cmd := command()
+	fmt.Println("=========")
+	fmt.Println(cmd)
+	fmt.Println("=========")
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
@@ -24,25 +27,92 @@ func main() {
 	}
 }
 
+func command() *exec.Cmd {
+	var c Command
+	if len(os.Args) > 1 {
+		c = parse(os.Args)
+	} else {
+		c = prompt()
+	}
+	fmt.Printf("%+v\n", c)
+	return exec.Command("npm", c.args()...)
+}
+
+type Command struct {
+	Script     string   `survey:"script"`
+	Arguments  string   `survey:"arguments"`
+	Workspaces []string `survey:"workspaces"`
+}
+
+func (c Command) args() []string {
+	args := []string{"run", c.Script}
+	for _, w := range c.Workspaces {
+		w = strings.Trim(w, " ")
+		if w != "" {
+			args = append(args, "--workspace="+w)
+		}
+	}
+	opts := strings.Trim(c.Arguments, " ")
+	if len(opts) > 0 {
+		args = append(args, "--")
+		args = append(args, c.Arguments)
+	}
+	fmt.Println(args)
+	return args
+}
+
 type packageJSON struct {
 	Scripts    map[string]string `json:"scripts"`
 	Workspaces *[]string         `json:"workspaces,omitempty"`
 }
 
-func loadArgs() []string {
-	args := os.Args
-	if len(args) < 2 {
-		args = promptArgs()
-	} else {
-		args = args[1:]
+// returns arguments, workspaces
+func parse(args []string) Command {
+	cmd := Command{
+		Workspaces: []string{},
 	}
-	if len(args) > 1 {
-		return append([]string{args[0], "--"}, args[1:]...)
+	args = args[1:]
+	foundNonFlag := false
+	cp := make([]string, len(args))
+	nextIsWorkspace := false
+	for i, a := range args {
+		if !foundNonFlag && strings.HasPrefix(a, "-w") {
+			fmt.Println("skipping", a, "\tindex", i)
+			if strings.HasPrefix(a, "-w=") {
+				cmd.Workspaces = append(cmd.Workspaces, strings.Split(strings.Replace(a, "-w=", "", 1), ",")...)
+				nextIsWorkspace = false
+			} else {
+				nextIsWorkspace = true
+			}
+			continue
+		}
+		if strings.HasPrefix(a, "--workspace") {
+			if strings.HasPrefix(a, "--workspace=") {
+				cmd.Workspaces = append(cmd.Workspaces, strings.Split(strings.Replace(a, "--workspace=", "", 1), ",")...)
+				nextIsWorkspace = false
+			} else {
+				nextIsWorkspace = true
+			}
+			continue
+		}
+		if nextIsWorkspace {
+			cmd.Workspaces = append(cmd.Workspaces, a)
+			nextIsWorkspace = false
+			continue
+		}
+		foundNonFlag = true
+		if cmd.Script == "" {
+			cmd.Script = a
+			continue
+		}
+		cp = append(cp, a)
 	}
-	return []string{args[0]}
+	fmt.Printf("%+x\n", cmd)
+	cmd.Arguments = strings.Join(cp, " ")
+	return cmd
 }
 
-func promptArgs() []string {
+func prompt() Command {
 	p, err := os.ReadFile("package.json")
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
@@ -53,15 +123,12 @@ func promptArgs() []string {
 		os.Exit(1)
 	}
 	var pkg packageJSON
-
 	err = json.Unmarshal(p, &pkg)
 	if err != nil {
 		color.Red("error parsing package.json")
 		os.Exit(1)
 	}
-
 	scripts := []string{}
-
 	for k := range pkg.Scripts {
 		scripts = append(scripts, k)
 	}
@@ -82,40 +149,33 @@ func promptArgs() []string {
 			},
 		},
 	}
+	// TODO: there doesn't seem to be a way to get the list of workspaces from
+	// npm in order to prompt, the globs would need to be expanded and each
+	// package.json file would need to be read for the name.
 
-	if pkg.Workspaces != nil && len(*pkg.Workspaces) > 0 {
-		qs = append(qs, &survey.Question{
-			Name: "workspaces",
-			Prompt: &survey.MultiSelect{
-				Message: "Workspaces:",
-				Options: *pkg.Workspaces,
-			},
-		})
-	}
+	// this strategy also does not take into account that each workspace would
+	// presumably have different scripts. This would require a different
+	// approach. Workspaces would need to be selected first which I'm not crazy
+	// about for my own workflow.
 
-	a := struct {
-		Script     string   `survey:"script"`
-		Arguments  string   `survey:"arguments"`
-		Workspaces []string `survey:"workspaces"`
-	}{}
+	// given that this is just a simple utility for me and I doubt I'll use the
+	// prompts much, if at all this is more effort than I'm willing to put in at
+	// the moment, plus it'd slow things down
+
+	// if pkg.Workspaces != nil && len(*pkg.Workspaces) > 0 {
+	// 	qs = append(qs, &survey.Question{
+	// 		Name: "workspaces",
+	// 		Prompt: &survey.MultiSelect{
+	// 			Message: "Workspaces:",
+	// 			Options: *pkg.Workspaces,
+	// 		},
+	// 	})
+	// }
+	var a Command
 	err = survey.Ask(qs, &a)
 	if err != nil {
 		color.Red(err.Error())
 		os.Exit(1)
 	}
-	ws := []string{}
-	for _, w := range a.Workspaces {
-		if len(w) > 0 {
-			ws = append(ws, w)
-		}
-	}
-	if len(ws) > 0 {
-		// TODO: add --workspace flag
-	}
-	args := strings.TrimSpace(a.Arguments)
-	if args != "" {
-		return append([]string{a.Script}, args)
-	} else {
-		return []string{a.Script}
-	}
+	return a
 }
