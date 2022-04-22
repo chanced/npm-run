@@ -314,16 +314,3 @@ func prompt() Command {
 	}
 	return a
 }
-
-// TODO: there doesn't seem to be a way to get the list of workspaces from
-// npm in order to prompt, the globs would need to be expanded and each
-// package.json file would need to be read for the name.
-
-// this strategy also does not take into account that each workspace would
-// presumably have different scripts. This would require a different
-// approach. Workspaces would need to be selected first which I'm not crazy
-// about for my own workflow.
-
-// given that this is just a simple utility for me and I doubt I'll use the
-// prompts much, if at all this is more effort than I'm willing to put in at
-// the moment, plus it'd slow things down
