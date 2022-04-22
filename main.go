@@ -94,12 +94,15 @@ func parse(args []string) Command {
 			continue
 		}
 		foundNonFlag = true
+		a = strings.Trim(a, " ")
 		if cmd.Script == "" {
 			cmd.Script = a
 			continue
 		}
+
 		cp = append(cp, a)
 	}
+
 	cmd.Arguments = strings.Join(cp, " ")
 	return cmd
 }
