@@ -10,10 +10,12 @@ import (
 	"path"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/bmatcuk/doublestar/v4"
 	"github.com/fatih/color"
+	"golang.org/x/sync/errgroup"
 )
 
 func main() {
@@ -164,19 +166,30 @@ func loadWorkspacePackages(pkg packageJSON) map[string]packageJSON {
 		return map[string]packageJSON{}
 	}
 	result := map[string]packageJSON{}
+	g := &errgroup.Group{}
+	mut := sync.Mutex{}
+
 	for _, pattern := range pkg.Workspaces {
 		doublestar.GlobWalk(os.DirFS(cwd()), pattern, func(path string, d fs.DirEntry) error {
 			if !d.IsDir() {
 				return nil
 			}
-			wp := openPackage(path)
-			if _, ok := result[wp.Name]; ok {
-				color.Red("duplicate package name:", wp.Name)
-				os.Exit(1)
-			}
-			result[wp.Name] = wp
+			g.Go(func() error {
+				wp := openPackage(path)
+				if _, ok := result[wp.Name]; ok {
+					color.Red("duplicate package name:", wp.Name)
+					os.Exit(1)
+				}
+				mut.Lock()
+				defer mut.Unlock()
+				result[wp.Name] = wp
+				return nil
+			})
 			return nil
 		})
+	}
+	if err := g.Wait(); err != nil {
+		color.Red("run error:", err.Error())
 	}
 	return result
 }
