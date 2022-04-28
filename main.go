@@ -177,7 +177,7 @@ func loadWorkspacePackages(pkg packageJSON) map[string]packageJSON {
 			g.Go(func() error {
 				wp := openPackage(path)
 				if _, ok := result[wp.Name]; ok {
-					color.Red("duplicate package name:", wp.Name)
+					color.Red("duplicate package name: \"%v\"", wp.Name)
 					os.Exit(1)
 				}
 				mut.Lock()
@@ -189,7 +189,7 @@ func loadWorkspacePackages(pkg packageJSON) map[string]packageJSON {
 		})
 	}
 	if err := g.Wait(); err != nil {
-		color.Red("run error:", err.Error())
+		color.Red("run error: %s", err.Error())
 	}
 	return result
 }
