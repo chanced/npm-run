@@ -10,7 +10,6 @@ import (
 	"path"
 	"sort"
 	"strings"
-	"sync"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/bmatcuk/doublestar/v4"
@@ -167,7 +166,8 @@ func loadWorkspacePackages(pkg packageJSON) map[string]packageJSON {
 	}
 	result := map[string]packageJSON{}
 	g := &errgroup.Group{}
-	mut := sync.Mutex{}
+
+	ch := make(chan packageJSON, 3)
 
 	for _, pattern := range pkg.Workspaces {
 		doublestar.GlobWalk(os.DirFS(cwd()), pattern, func(path string, d fs.DirEntry) error {
@@ -176,19 +176,29 @@ func loadWorkspacePackages(pkg packageJSON) map[string]packageJSON {
 			}
 			g.Go(func() error {
 				wp := openPackage(path)
-				if _, ok := result[wp.Name]; ok {
-					color.Red("duplicate package name: \"%v\"", wp.Name)
-					os.Exit(1)
-				}
-				mut.Lock()
-				defer mut.Unlock()
-				result[wp.Name] = wp
+
+				ch <- wp
 				return nil
 			})
 			return nil
 		})
 	}
+	c := errgroup.Group{}
+	c.Go(func() error {
+		for pkg := range ch {
+			if _, ok := result[pkg.Name]; ok {
+				return fmt.Errorf("duplicate package name: \"%v\"", pkg.Name)
+			}
+			result[pkg.Name] = pkg
+		}
+		return nil
+	})
+
 	if err := g.Wait(); err != nil {
+		color.Red("run error: %s", err.Error())
+	}
+	close(ch)
+	if err := c.Wait(); err != nil {
 		color.Red("run error: %s", err.Error())
 	}
 	return result
