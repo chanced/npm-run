@@ -42,7 +42,7 @@ If a single workspace is selected, the scripts available are presented as the
 next prompt.
 
 If multiple workspaces are selected, only the scripts common between the
-selections.
+selections are offered as options.
 
 ## License
 
