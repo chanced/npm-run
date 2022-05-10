@@ -1,6 +1,6 @@
 # run
 
-A simple go program that runs local npm scripts.
+A simple program that runs local npm scripts.
 
 [![asciicast](https://asciinema.org/a/Ei8b8iZBkj7qhYkPNMtC7WwFj.svg)](https://asciinema.org/a/Ei8b8iZBkj7qhYkPNMtC7WwFj)
 
