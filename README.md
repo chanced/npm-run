@@ -14,7 +14,7 @@ go install github.com/chanced/run@latest
 
 ### Run a known script
 
-Run npm scripts directly with arguments with:
+Run npm scripts directly with arguments:
 
 ```bash
 run [script-name] [args...]
