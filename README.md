@@ -30,7 +30,7 @@ run -w my-workspace my-script --arg value
 
 ### Discover scripts
 
-Execute `run` to enter prompt mode which allows offers a guided selection of scripts.
+Execute `run` to enter prompt mode which offers a guided selection of scripts.
 
 #### Workspaces
 
