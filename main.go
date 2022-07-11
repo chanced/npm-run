@@ -282,6 +282,8 @@ func prompt() Command {
 	pkg := openPackage(cwd())
 	ws := loadWorkspacePackages(pkg)
 
+	ws[pkg.Name] = pkg
+
 	if len(ws) > 0 {
 		prompt := &survey.MultiSelect{
 			Message: "Workspaces:",
